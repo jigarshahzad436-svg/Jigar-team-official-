@@ -64,13 +64,13 @@ async function generateAudio(text) {
 }
 
 // ===== HAMARA MAIN FUNCTION (AI KA JISM) =====
-exports.handler = async (event) => {
+export default async function handler(request, response) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   try {
-    let body = JSON.parse(event.body);
+    let body = request.body;
 
     
     const { message, mode, userId } = body;
@@ -211,13 +211,10 @@ exports.handler = async (event) => {
     const audioUrl = await generateAudio(aiText);
 
     // 8. Final jawab user ko wapas bhejna
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ 
-        reply: aiText,
-        audioUrl: audioUrl 
-      }),
-    };
+    response.status(200).json({ 
+    reply: aiText,
+    audioUrl: audioUrl 
+});
 
   } catch (error) {
     console.error("❌ AI Error:", error);
