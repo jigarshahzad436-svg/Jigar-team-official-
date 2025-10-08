@@ -65,7 +65,7 @@ async function generateAudio(text) {
 
 // ===== HAMARA MAIN FUNCTION (AI KA JISM) =====
 export default async function handler(request, response) {
-  if (event.httpMethod !== 'POST') {
+  if (request.method !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
