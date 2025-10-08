@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <title>Jigar Team - AI Chat</title>
+      <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+
+<script>eruda.init();</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    
+    <style>
+        /* === SECTION 1: THEME & COLOR VARIABLES === */
+        :root {
+            /* Default Theme: Professional Blue */
+            --theme-bg-dark: #000000;
+            --theme-bg-medium: #0a0a14;
+            --theme-bg-light: #101022;
+            --theme-header: #1a1a33;
+            --theme-text-primary: #f0f0f5;
+            --theme-text-secondary: #a0a0b5;
+            --theme-accent-main: #007bff;
+            --theme-user-msg: #0056b3;
+            --theme-glow-start: #007bff;
+            --theme-glow-end: #ff00ff;
+            --vh: 1vh; /* Viewport height unit */
+        }
+
+        /* === SECTION 2: AAPKA ORIGINAL LAYOUT CSS (SIRF COLORS UPDATE KIYE HAIN) === */
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--theme-bg-medium); /* THEME */
+            color: var(--theme-text-primary); /* THEME */
+            overflow: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        .screen { display: none; width: 100%; height: calc(var(--vh) * 100); }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* Auth Screen (Layout waisa hi, colors naye) */
+        #auth-screen { justify-content: center; align-items: center; overflow-y: auto; padding: 20px; background-color: var(--theme-bg-dark); }
+        .auth-container { width: 100%; max-width: 420px; background-color: var(--theme-bg-light); padding: 25px 35px; border-radius: 15px; text-align: center; margin: 20px 0; border: 1px solid var(--theme-header); }
+        .auth-container h1 { color: var(--theme-accent-main); margin-top: 0; }
+        .auth-form { display: none; } .auth-form.active { display: block; }
+        .input-box { margin-bottom: 18px; text-align: left; }
+        .input-box label { font-weight: 600; color: var(--theme-text-secondary); display: block; margin-bottom: 8px; }
+        .input-field { width: 100%; padding: 12px; background-color: var(--theme-bg-medium); border: 1px solid var(--theme-header); border-radius: 8px; color: var(--theme-text-primary); font-size: 1em; }
+        .submit-btn { width: 100%; padding: 15px; font-size: 1.2em; font-weight: bold; color: #ffffff; background: var(--theme-accent-main); border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .submit-btn:disabled { background: #555; cursor: not-allowed; }
+        .profile-pic-wrapper { margin-bottom: 20px; position: relative; display: inline-block; }
+        .profile-pic { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--theme-accent-main); cursor: pointer; }
+        #profile-pic-input { display: none; }
+        .camera-icon { position: absolute; bottom: 5px; right: 5px; background-color: #2a3942; color: #e0e0e0; border-radius: 50%; padding: 8px; font-size: 1.2em; border: 2px solid var(--theme-bg-light); pointer-events: none; }
+        .error-message { color: #ff6b6b; margin-top: 15px; display: none; font-weight: bold; }
+        .back-link { color: var(--theme-text-secondary); cursor: pointer; margin-top: 20px; display: inline-block; }
+
+        /* Chat Screen (Layout waisa hi, colors naye) */
+        #chat-screen { background: var(--theme-bg-dark); }
+        .chat-header { background: var(--theme-header); padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1px solid var(--theme-bg-light); }
+        .header-left { display: flex; align-items: center; }
+        .agent-info h3 { margin: 0; font-size: 1.2em; color: var(--theme-text-primary); }
+        .menu-btn { background: none; border: none; color: var(--theme-text-secondary); font-size: 1.5em; cursor: pointer; padding: 10px; }
+
+        /* Side Navigation Menu (Layout waisa hi, naya button add kiya) */
+        .side-nav { height: 100%; width: 0; position: fixed; z-index: 2000; top: 0; left: 0; background-color: var(--theme-bg-medium); overflow-x: hidden; transition: 0.4s; display: flex; flex-direction: column; box-shadow: 5px 0px 15px rgba(0,0,0,0.5); }
+        .side-nav .close-btn { position: absolute; top: 15px; right: 25px; font-size: 36px; color: var(--theme-text-secondary); text-decoration: none; }
+        .profile-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid var(--theme-bg-light); }
+        .profile-header img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--theme-accent-main); margin-bottom: 15px; }
+        .profile-header h4 { color: var(--theme-text-primary); font-size: 1.3em; margin: 0 0 5px 0; }
+        .profile-header p { color: var(--theme-text-secondary); font-size: 0.9em; margin: 0; }
+        .nav-action-btn { padding: 20px; text-align: center; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        .nav-action-btn i { margin-right: 10px; }
+        #theme-change-btn { color: var(--theme-accent-main); }
+        #theme-change-btn:hover { background-color: var(--theme-bg-light); }
+        .nav-bottom-section { margin-top: auto; background: var(--theme-bg-light); }
+        #nav-logout-btn { color: #ff6b6b; }
+        #nav-logout-btn:hover { background-color: rgba(255, 107, 107, 0.1); }
+        /* --- YAHAN SE COPY KARNA SHURU KAREIN --- */
+
+/* === NAYE 'ALL USERS' BUTTON KA STYLE === */
+.all-users-btn {
+    color: #25D366; /* WhatsApp Green Color */
+    border-top: 1px solid #3a444b; /* Upar ek halki si line */
+    border-bottom: 1px solid #3a444b; /* Neeche ek halki si line */
+}
+.all-users-btn:hover {
+    background-color: #1f2c34; /* Hover par thora dark background */
+}
+
+
+        /* Messages & Input (Layout waisa hi, design naya) */
+        .messages-area { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        /* === SECTION 3: NAYA GLOWING BORDER EFFECT === */
+        @keyframes glowing-border {
+            0% { border-color: var(--theme-glow-start); box-shadow: 0 0 3px var(--theme-glow-start); }
+            50% { border-color: var(--theme-glow-end); box-shadow: 0 0 10px var(--theme-glow-end); }
+            100% { border-color: var(--theme-glow-start); box-shadow: 0 0 3px var(--theme-glow-start); }
+        }
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            position: relative;
+            animation: pop-in 0.3s ease;
+            /* Naya Glowing Border */
+            border: 1.5px solid transparent;
+            animation: glowing-border 4s ease-in-out infinite, pop-in 0.3s ease;
+        }
+        @keyframes pop-in { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .message.sent { background-color: var(--theme-user-msg); align-self: flex-end; border-bottom-right-radius: 3px; }
+        .message.received { background-color: var(--theme-bg-light); align-self: flex-start; border-bottom-left-radius: 3px; padding-top: 45px; padding-left: 15px; }
+        
+        .msg-text { font-size: 1em; word-wrap: break-word; }
+        .msg-image { max-width: 100%; border-radius: 8px; cursor: pointer; }
+        .message-content { margin-bottom: 8px; }
+        .msg-meta { display: flex; align-items: center; align-self: flex-end; margin-top: 4px; }
+        .msg-time { font-size: .75em; color: var(--theme-text-secondary); margin-right: 5px; }
+        .msg-status i { color: #53bdeb; }
+
+        .message-input-form { display: flex; align-items: center; padding: 10px 15px; background-color: var(--theme-header); flex-shrink: 0; }
+        .input-wrapper { flex-grow: 1; display: flex; align-items: center; background-color: var(--theme-bg-light); border-radius: 25px; padding: 0 10px; border: 1px solid var(--theme-bg-medium); }
+        #message-input { flex-grow: 1; padding: 12px 5px; background: none; border: none; color: var(--theme-text-primary); font-size: 1em; outline: none; }
+        .chat-btn { background: none; border: none; color: var(--theme-text-secondary); font-size: 1.5em; cursor: pointer; padding: 10px; transition: color .3s; }
+        .chat-btn:hover { color: var(--theme-accent-main); }
+        #send-btn { background: var(--theme-accent-main); color: #fff; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; margin-left: 10px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+
+        /* Online Counter (Layout waisa hi, colors naye) */
+        .online-counter { display: flex; flex-direction: column; align-items: center; margin: 0 auto; padding: 0 10px; }
+        .dp-stack { display: flex; padding-right: 0; }
+        .stacked-dp { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--theme-bg-dark); margin-left: -12px; object-fit: cover; }
+        .stacked-dp:first-child { margin-left: 0; }
+        .online-text { display: flex; flex-direction: row; align-items: center; gap: 4px; margin-top: 2px; line-height: 1; }
+        .online-text #online-number-display { font-weight: bold; font-size: 0.8em; color: var(--theme-text-primary); }
+        .online-text span:last-child { font-size: 0.7em; color: var(--theme-accent-main); text-transform: uppercase; }
+
+        /* Agent DP/Name Bubble (Layout waisa hi, colors naye) */
+        .agent-display { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; }
+        .agent-dp { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 2px solid var(--theme-accent-main); }
+        .agent-name { font-size: 0.9em; font-weight: bold; color: var(--theme-accent-main); }
+
+        /* Typing Indicator (Layout waisa hi, colors naye) */
+        .typing-indicator-container { display: flex; align-items: flex-end; padding: 0 15px; align-self: flex-start; width: auto; max-width: 75%; margin-bottom: 12px; }
+        .typing-dp { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 2px solid var(--theme-accent-main); }
+        .typing-indicator-container .message.received { background-color: var(--theme-bg-light); padding: 8px 12px; display: inline-block; min-width: 80px; margin-bottom: 0; padding-top: 8px; padding-left: 12px; }
+   
+   /* Speaker aur Copy buttons ke liye naya CSS */
+.msg-actions {
+    margin-top: 8px;
+    opacity: 0.6;
+    display: flex;
+    gap: 5px; /* Buttons ke darmiyan fasla */
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1em; /* Size thora chota */
+    padding: 5px;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.action-btn:hover {
+    color: var(--accent-green); /* Aap isko --theme-accent-main bhi kar sakte hain */
+    transform: scale(1.1);
+}
+
+   
+   /* --- YAHAN SE COPY KARNA SHURU KAREIN --- */
+
+/* === NAYA AUDIO PLAYER CSS === */
+.audio-player-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 20px;
+    margin-top: 8px;
+    max-width: 250px;
+    transition: all 0.3s ease;
+}
+
+.audio-player-container .play-pause-btn {
+    background: var(--theme-accent-main);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.audio-player-container .progress-bar-wrapper {
+    flex-grow: 1;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.audio-player-container .progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--theme-accent-main);
+    border-radius: 2px;
+}
+
+.audio-player-container .time-display {
+    font-size: 0.8em;
+    color: var(--theme-text-secondary);
+    min-width: 35px;
+    text-align: right;
+}
+
+/* --- YAHAN TAK COPY KAREIN --- */
+
+
+    </style>
+    
+</head>
+<body>
+
+    <!-- Screen 1: Authentication -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <div id="selection-view">
+                <h1>Welcome to Jigar Team</h1>
+                <button id="show-login-btn" class="submit-btn">Login</button>
+                <button id="show-signup-btn" class="submit-btn" style="background-color: #2a3942; margin-top: 15px;">Create Account</button>
+            </div>
+            <form id="login-form" class="auth-form">
+                <h2>Login to Your Account</h2>
+                <div class="input-box"><label for="login-email">Email</label><input type="email" id="login-email" class="input-field" required></div>
+                <div class="input-box"><label for="login-password">Password</label><input type="password" id="login-password" class="input-field" required></div>
+                <button type="submit" id="login-btn" class="submit-btn">Login</button>
+                <p id="login-error" class="error-message"></p>
+                <a class="back-link" id="back-to-selection-from-login">&#8592; Back</a>
+            </form>
+            <form id="signup-form" class="auth-form">
+                <h2>Create a New Account</h2>
+                <div class="profile-pic-wrapper">
+                    <img src="https://i.ibb.co/1dK9tpr/default-avatar.jpg" id="profile-pic-preview" class="profile-pic">
+                    <i class="fas fa-camera camera-icon"></i>
+                    <input type="file" id="profile-pic-input" accept="image/*">
+                </div>
+                <div class="input-box"><label for="signup-name">Full Name</label><input type="text" id="signup-name" class="input-field" required></div>
+                <div class="input-box"><label for="signup-email">Email</label><input type="email" id="signup-email" class="input-field" required></div>
+                <div class="input-box"><label for="signup-password">Password (min. 6 characters)</label><input type="password" id="signup-password" class="input-field" required></div>
+                <button type="submit" id="signup-btn" class="submit-btn">Create Account</button>
+                <p id="signup-error" class="error-message"></p>
+                <a class="back-link" id="back-to-selection-from-signup">&#8592; Back</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen 2: Chat -->
+    <div id="chat-screen" class="screen">
+        <div id="side-menu" class="side-nav">
+            <a href="javascript:void(0)" class="close-btn" id="close-nav-btn">&times;</a>
+            <div class="profile-header">
+                <img id="menu-profile-pic" src="https://i.ibb.co/1dK9tpr/default-avatar.jpg" alt="User Profile">
+                <h4 id="menu-profile-name">User Name</h4>
+                <p id="menu-profile-email">user@email.com</p>
+            </div>
+            <!-- --- YAHAN SE COPY KARNA SHURU KAREIN --- -->
+
+<!-- === NAYA 'ALL USERS' BUTTON === -->
+<a href="index.html" class="nav-action-btn all-users-btn">
+    <i class="fas fa-users"></i>All Users
+</a>
+
+<!-- --- YAHAN TAK COPY KAREIN --- -->
+
+            <!-- NAYA BUTTON AUR LOGOUT SECTION -->
+            <div class="nav-bottom-section">
+                <div id="theme-change-btn" class="nav-action-btn"><i class="fas fa-palette"></i>Change Theme</div>
+                <div id="nav-logout-btn" class="nav-action-btn"><i class="fas fa-sign-out-alt"></i>Logout</div>
+            </div>
+        </div>
+        
+   
+<header class="chat-header">
+    <div class="header-left">
+        <div class="agent-info"><h3>Jigar Official Team</h3></div>
+    </div>
+
+    <!-- === YAHAN NAYA CODE ADD HUA HAI === -->
+    <div class="online-counter">
+        <div id="online-dp-stack" class="dp-stack">
+            <!-- JavaScript yahan DPs add karega -->
+        </div>
+        <div class="online-text">
+            <span id="online-number-display">700</span>
+            <span>Online</span>
+        </div>
+    </div>
+    <!-- ===================================== -->
+
+    <button class="menu-btn" id="open-nav-btn"><i class="fas fa-bars"></i></button>
+</header>
+
+
+        <main class="messages-area" id="messages-area"></main>
+                <!-- === YAHAN NAYA CODE ADD HUA HAI === -->
+        <div id="typing-indicator" class="typing-indicator-container" style="display: none;">
+    <img id="typing-dp" src="" class="typing-dp">
+    <div class="message received">
+        <span id="typing-text">Typing.....</span>
+    </div>
+</div>
+        <!-- ===================================== -->
+        <form class="message-input-form" id="message-form">
+            <div class="input-wrapper">
+                <label for="image-upload-input" class="chat-btn"><i class="fas fa-paperclip"></i></label>
+                <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
+            </div>
+            <button type="submit" id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </form>
+        <!-- --- YAHAN SE COPY KARNA SHURU KAREIN --- -->
+
+<!-- NAYA GLOBAL AUDIO PLAYER (Initially Hidden) -->
+<div id="global-audio-player" class="audio-player-container" style="display: none;">
+    <button id="audio-play-pause-btn" class="play-pause-btn">
+        <i class="fas fa-play"></i>
+    </button>
+    <div id="audio-progress-wrapper" class="progress-bar-wrapper">
+        <div id="audio-progress-bar" class="progress-bar"></div>
+    </div>
+    <span id="audio-time-display" class="time-display">0:00</span>
+</div>
+
+<!-- --- YAHAN TAK COPY KAREIN --- -->
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+<script type="module">
+    // --- 1. FIREBASE SETUP (NAYE IMPORTS KE SATH) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, push, serverTimestamp, query, orderByChild, off, limitToLast, get } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js"; // NAYA: limitToLast aur get ko import kiya
+
+    console.log("🚀 Application script loaded. Initializing...");
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBFLTBJFMJAHNJs1XIWgRivwlAwPv2A5PQ",
+        authDomain: "life-change-easy.firebaseapp.com",
+        databaseURL: "https://life-change-easy-default-rtdb.firebaseio.com",
+        projectId: "life-change-easy",
+        storageBucket: "life-change-easy.firebasestorage.app",
+        messagingSenderId: "340480283671",
+        appId: "1:340480283671:web:fd4d1aeb5f2d9500d4b852",
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    console.log("✅ Firebase initialized.");
+    
+    // === NAYI AGENTS KI LIST ===
+const AGENT_PROFILES = [
+  { name: "Zunera khan", dp: "https://i.ibb.co/wN5TbNhT/real-girl-pic-photo-images38.webp" },
+  { name: "Irhrat fatima", dp: "https://i.ibb.co/gMPhL9sC/real-girl-pic-photo-images37.webp" },
+  { name: "Fatima memon", dp: "https://i.ibb.co/9HXkKNHQ/real-girl-pic-photo-images34.webp" },
+  { name: "Sehar khan", dp: "https://i.ibb.co/3mdtktXD/real-girl-pic-photo-images32.webp" },
+  { name: "Mahin khan", dp: "https://i.ibb.co/zWcY3VgZ/real-girl-pic-photo-images29.webp" },
+  { name: "Farha memon", dp: "https://i.ibb.co/tTmNqtKg/real-girl-pic-photo-images27.webp" },
+  { name: "Zainab khan", dp: "https://i.ibb.co/vvJ4myYG/real-girl-pic-photo-images24.webp" },
+  { name: "Alina khan", dp: "https://i.ibb.co/svRGJCHT/real-girl-pic-photo-images23.webp" },
+  { name: "Isra memon", dp: "https://i.ibb.co/278cZT6q/real-girl-pic-photo-images2.webp" },
+  { name: "Sana memon", dp: "https://i.ibb.co/7tBvgMGZ/real-girl-pic-photo-images18.webp" },
+  { name: "Mehak memon", dp: "https://i.ibb.co/QFSsKs2h/real-girl-pic-photo-images17.webp" },
+  { name: "Alya khan", dp: "https://i.ibb.co/GrrQVhN/real-girl-pic-photo-images110.webp" },
+  { name: "Isra Khan", dp: "https://i.ibb.co/x9LbK7W/real-girl-pic-photo-images109.webp" },
+  { name: "Alisha khan", dp: "https://i.ibb.co/ZzGdSVwg/real-girl-pic-photo-images108.webp" },
+  { name: "Alisha khan", dp: "https://i.ibb.co/XZyCxVNT/real-girl-pic-photo-images105-1.webp" },
+  { name: "Zara", dp: "https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp" },
+  { name: "Zara khan", dp: "https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp" },
+  { name: "Zuneraa khan", dp: "https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp" },
+  { name: "Aleesha Khan", dp: "https://i.ibb.co/c01m4ZQ/b603fc3d8c5cbdb295f3447e7a880b8d.jpg" },
+  { name: "Haleema Aslam", dp: "https://i.ibb.co/Zz6GLYfq/29ecf8ce89506db5f99b05de2e57f2cf.jpg" },
+  { name: "Nida Farooq", dp: "https://i.ibb.co/SwKWx1jw/6cdef4b8e822f9327ef7fee2b72ae367.jpg" },
+  { name: "Ayesha Malik", dp: "https://i.ibb.co/qYqrJD8q/IMG-20250917-WA0174.jpg" },
+  { name: "Fatima Zahra", dp: "https://i.ibb.co/hFLJYM1C/IMG-20250917-WA0176.jpg" },
+  { name: "Mariam Ansari", dp: "https://i.ibb.co/HfMNpNjH/IMG-20250917-WA0173.jpg" },
+  { name: "Hina Bukhari", dp: "https://i.ibb.co/Zz514DF5/IMG-20250917-WA0169.jpg" },
+  { name: "Sana Tariq", dp: "https://i.ibb.co/Rk3Hp7br/IMG-20250917-WA0178.jpg" },
+  { name: "Sara Noor", dp: "https://i.ibb.co/B5mJCPp8/IMG-20250917-WA0175.jpg" },
+  { name: "Mahnoor Khalid", dp: "https://i.ibb.co/Xx5g9hhG/IMG-20250917-WA0040.jpg" },
+  { name: "Rabia Sheikh", dp: "https://i.ibb.co/Vcfk5MdZ/IMG-20250917-WA0064.jpg" },
+  { name: "Laiba Noreen", dp: "https://i.ibb.co/Zz1WGY2F/IMG-20250917-WA0038.jpg" },
+  { name: "Iqra Batool", dp: "https://i.ibb.co/rRKy2ks9/IMG-20250917-WA0037.jpg" },
+  { name: "Maryam Jameel", dp: "https://i.ibb.co/gMxKG3ZF/IMG-20250917-WA0036.jpg" },
+  { name: "Nimra Khan", dp: "https://i.ibb.co/dsHBcCfs/d2164c43f344a6415aa9ba5ac3accd5f.jpg" },
+  { name: "Sadia mogal", dp: "https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp" },
+  { name: "Haya khan", dp: "https://i.ibb.co/wN5TbNhT/real-girl-pic-photo-images38.webp" },
+  { name: "Saba khan", dp: "https://i.ibb.co/gMPhL9sC/real-girl-pic-photo-images37.webp" },
+  { name: "Maleha mogal", dp: "https://i.ibb.co/9HXkKNHQ/real-girl-pic-photo-images34.webp" },
+  { name: "Zoya khan", dp: "https://i.ibb.co/3mdtktXD/real-girl-pic-photo-images32.webp" },
+  { name: "Mehak moghal", dp: "https://i.ibb.co/zWcY3VgZ/real-girl-pic-photo-images29.webp" },
+  { name: "Dua moghal", dp: "https://i.ibb.co/vvJ4myYG/real-girl-pic-photo-images24.webp" },
+  { name: "Sidraa khan", dp: "https://i.ibb.co/svRGJCHT/real-girl-pic-photo-images23.webp" },
+  { name: "Iqra khan", dp: "https://i.ibb.co/278cZT6q/real-girl-pic-photo-images2.webp" },
+  { name: "Zainab", dp: "https://i.ibb.co/7tBvgMGZ/real-girl-pic-photo-images18.webp" },
+  { name: "Tayaba Khan", dp: "https://i.ibb.co/QFSsKs2h/real-girl-pic-photo-images17.webp" },
+  { name: "Ayesha Khan", dp: "https://i.ibb.co/GrrQVhN/real-girl-pic-photo-images110.webp" },
+  { name: "Mahnoor khan", dp: "https://i.ibb.co/x9LbK7W/real-girl-pic-photo-images109.webp" },
+  { name: "Fiza ali", dp: "https://i.ibb.co/ZzGdSVwg/real-girl-pic-photo-images108.webp" },
+  { name: "Sonya", dp: "https://i.ibb.co/XZyCxVNT/real-girl-pic-photo-images105-1.webp" },
+  { name: "Sana khan", dp: "https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp" },
+  { name: "Ayesha c.h.o", dp: "https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp" },
+  { name: "Fatima memon", dp: "https://i.ibb.co/VYTLX1ZK/real-girl-pic-photo-images100.webp" },
+  { name: "Ayesha Khan", dp: "https://i.ibb.co/JwmxRWx/5f08631b4814f96764579de6641a50c0.jpg" },
+  { name: "Fatima Malik", dp: "https://i.ibb.co/GfVhSBLV/f476179bc399d9adfe22b01a504bfe05.jpg" },
+  { name: "Maryam Sheikh", dp: "https://i.ibb.co/0yb3YmT6/b0cfa2b7d92bd96135520874ecbe6047.jpg" },
+  { name: "Zainab Ali", dp: "https://i.ibb.co/VWXB79kX/e9764876885fc9c0893493a676ee15ba.jpg" },
+  { name: "Hina Khan", dp: "https://i.ibb.co/FkRtm6sv/d1a6f9c5ddf9d210bf5c0049de8adad9.jpg" },
+  { name: "Sara Qureshi", dp: "https://i.ibb.co/XrC9WFZD/dac5e176b2bb36d40d98ac06548a82fb.jpg" },
+  { name: "Anum Raza", dp: "https://i.ibb.co/YSnHjm3/2ca4af83aab1e11f1dc4b589e90478ea.jpg" },
+  { name: "Hoorain Shah", dp: "https://i.ibb.co/Jwp6Grjg/5a6b8803830f670479905c551cdfdfe5.jpg" },
+  { name: "Dua Shazadi", dp: "https://i.ibb.co/Wv8M3xsq/0fbc915d2394e4ea837167f8f4ae4af6.jpg" },
+  { name: "Aiman Khan", dp: "https://i.ibb.co/4nsmWvyb/dc633b6205b787ead6a211af1b8cd2e6.jpg" },
+  { name: "Manahil Abbas", dp: "https://i.ibb.co/gbM9zsfB/73d7dfae6835ffd9904eb792b30e76c9.jpg" },
+  { name: "Noreen Javed", dp: "https://i.ibb.co/nsWxWxSM/2e36d8e40174739659c2f90338ab574d.jpg" },
+  { name: "Kashaf Iqbal", dp: "https://i.ibb.co/QvMnhmD5/ec73aa9e1c0c4b975b6c19cc0eec3043.jpg" },
+  { name: "Rimsha Khan", dp: "https://i.ibb.co/cKBGmtgH/fd443e3c4043b2b628bf1ca993b49951.jpg" },
+  { name: "Rabia Siddiqui", dp: "https://i.ibb.co/hFyHSH4b/2b79b4f82cfa3b1dd1f6060bd2371a4c.jpg" },
+  { name: "Sidra Ahmed", dp: "https://i.ibb.co/bjpVp78x/364de7b46e434ddbd7e66f51d097b6dd.jpg" }
+];
+
+
+    // --- 2. DOM ELEMENTS & GLOBAL VARIABLES (Aapka Original Code) ---
+    const screens = document.querySelectorAll('.screen');
+    const authScreen = document.getElementById('auth-screen');
+    const chatScreen = document.getElementById('chat-screen');
+    const selectionView = document.getElementById('selection-view');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const messagesArea = document.getElementById('messages-area');
+    
+    let currentUser = null;
+    let activeChatListener = null;
+    let attachedImageBase64 = null;
+var currentAgentIndex = 0;
+var messagesSinceAgentSwitch = 0;
+
+    // --- 3. SCREEN & UI MANAGEMENT (Aapka Original Code) ---
+    function setRealViewportHeight() {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    setRealViewportHeight();
+    window.addEventListener('resize', setRealViewportHeight);
+
+    function showScreen(screenId) {
+        console.log(`🔄 Switching screen to: ${screenId}`);
+        screens.forEach(screen => screen.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    document.getElementById('show-login-btn').onclick = () => { selectionView.style.display = 'none'; loginForm.classList.add('active'); };
+    document.getElementById('show-signup-btn').onclick = () => { selectionView.style.display = 'none'; signupForm.classList.add('active'); };
+    function showSelection() {
+        loginForm.classList.remove('active');
+        signupForm.classList.remove('active');
+        selectionView.style.display = 'block';
+    }
+    document.getElementById('back-to-selection-from-login').onclick = showSelection;
+    document.getElementById('back-to-selection-from-signup').onclick = showSelection;
+    
+    document.getElementById('open-nav-btn').onclick = () => document.getElementById("side-menu").style.width = "280px";
+    document.getElementById('close-nav-btn').onclick = () => document.getElementById("side-menu").style.width = "0";
+    
+    document.getElementById('profile-pic-preview').onclick = () => document.getElementById('profile-pic-input').click();
+    document.getElementById('profile-pic-input').onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            document.getElementById('profile-pic-preview').src = URL.createObjectURL(e.target.files[0]);
+        }
+    };
+
+    // --- 4. AUTHENTICATION LOGIC (Aapka Original Code) ---
+    onAuthStateChanged(auth, (user) => {
+        console.log("🔍 Auth state changed. Checking user...");
+        if (activeChatListener) {
+            off(activeChatListener.ref, 'value', activeChatListener.callback);
+            activeChatListener = null;
+            console.log("👂 Previous chat listener removed.");
+        }
+        if (user) {
+            console.log(`✅ User is logged in: ${user.email}`);
+            currentUser = user;
+            showScreen('chat-screen');
+            updateSideMenu(user);
+            loadMessages(user.uid);
+            // === NAYA BLOCK: AGENT STATE KO LOAD KARO ===
+const userStateRef = ref(db, `chat_users/${user.uid}`);
+get(userStateRef).then((snapshot) => {
+    if (snapshot.exists() && snapshot.val().agentIndex !== undefined) {
+        currentAgentIndex = snapshot.val().agentIndex;
+        messagesSinceAgentSwitch = snapshot.val().messagesSinceSwitch;
+        console.log(`✅ Agent state loaded: Index ${currentAgentIndex}, Messages since switch ${messagesSinceAgentSwitch}`);
+    } else {
+        // Agar state mojood nahi hai, to bana do
+        set(ref(db, `chat_users/${user.uid}/agentIndex`), 0);
+        set(ref(db, `chat_users/${user.uid}/messagesSinceSwitch`), 0);
+    }
+});
+            window.startOnlineCounter();
+        } else {
+            console.log("🚪 User is logged out.");
+            currentUser = null;
+            showScreen('auth-screen');
+            showSelection();
+            window.stopOnlineCounter();
+        }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log("🚀 Signup process started...");
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const profilePicFile = document.getElementById('profile-pic-input').files[0];
+        const errorDiv = document.getElementById('signup-error');
+        const signupBtn = document.getElementById('signup-btn');
+
+        if (!name || !email || !password || !profilePicFile) {
+            errorDiv.textContent = "Please fill all fields and select a profile picture.";
+            errorDiv.style.display = 'block';
+            return;
+        }
+        signupBtn.disabled = true; signupBtn.textContent = "Creating...";
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            const profilePicBase64 = await fileToBase64(profilePicFile);
+            
+            await set(ref(db, `chat_users/${user.uid}`), {
+    name: name,
+    email: email,
+    profilePicture: profilePicBase64,
+    // === NAYI LINES ===
+    agentIndex: 0,
+    messagesSinceSwitch: 0
+});
+
+            
+            await updateProfile(user, { displayName: name, photoURL: profilePicBase64 });
+            console.log(`✅ Signup successful for ${email}`);
+        } catch (error) {
+            console.error("❌ Error during signup:", error);
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        } finally {
+            signupBtn.disabled = false; signupBtn.textContent = "Create Account";
+        }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log("🚀 Login process started...");
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.disabled = true; loginBtn.textContent = "Logging in...";
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            console.log(`✅ Login successful for ${email}`);
+        } catch (error) {
+            console.error("❌ Error during login:", error);
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        } finally {
+            loginBtn.disabled = false; loginBtn.textContent = "Login";
+        }
+    });
+
+    document.getElementById('nav-logout-btn').addEventListener('click', () => {
+        if (confirm("Are you sure you want to logout?")) {
+            console.log("🚀 Logout process started...");
+            signOut(auth).catch(error => console.error("❌ Error during logout:", error));
+        }
+    });
+
+    // --- 5. CHAT & DATABASE LOGIC (MUKAMMAL TAUR PAR NAYA) ---
+    
+    messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if ((!text && !attachedImageBase64) || !currentUser) return;
+        sendMessage(currentUser.uid, { text: text, imageBase64: attachedImageBase64 });
+        messageInput.value = '';
+        attachedImageBase64 = null;
+        const existingPreview = document.getElementById('image-preview-container');
+        if (existingPreview) existingPreview.remove();
+        document.getElementById('image-upload-input').value = '';
+    });
+
+    document.getElementById('image-upload-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+        console.log(`Original image size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        const options = {
+            maxSizeMB: 0.2,
+            maxWidthOrHeight: 800,
+            useWebWorker: true,
+            initialQuality: 0.6
+        }
+        try {
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Compressed image size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            attachedImageBase64 = await fileToBase64(compressedFile);
+            const existingPreview = document.getElementById('image-preview-container');
+            if (existingPreview) existingPreview.remove();
+            const previewContainer = document.createElement('div');
+            previewContainer.id = 'image-preview-container';
+            previewContainer.style = 'padding: 10px 15px 0 15px; background-color: var(--background-light);';
+            const innerDiv = document.createElement('div');
+            innerDiv.style = 'position: relative; display: inline-block;';
+            const previewImg = document.createElement('img');
+            previewImg.src = attachedImageBase64;
+            previewImg.style = 'max-width: 80px; max-height: 80px; border-radius: 8px;';
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.style = 'position: absolute; top: -5px; right: -5px; background: #111b21; color: white; border: 1px solid white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; line-height: 18px;';
+            closeBtn.onclick = () => {
+                attachedImageBase64 = null;
+                previewContainer.remove();
+                document.getElementById('image-upload-input').value = '';
+            };
+            innerDiv.appendChild(previewImg);
+            innerDiv.appendChild(closeBtn);
+            previewContainer.appendChild(innerDiv);
+            chatScreen.insertBefore(previewContainer, messageForm);
+        } catch (error) {
+            console.error("❌ Image Compression/Processing Error:", error);
+            alert("Failed to process image. It might be too large or in an unsupported format.");
+        }
+    });
+
+// === FINAL, UPGRADED sendMessage FUNCTION (WITH SYNCHRONIZED TYPING) ===
+async function sendMessage(userId, messageData) {
+    const chatRef = ref(db, `chats/user_${userId}`);
+    const summaryRef = ref(db, `chat_summaries/${userId}`);
+
+    try {
+        // 1. User ka message foran save karo (Aapka original code, bilkul theek hai)
+        await push(chatRef, {
+            sender: 'user',
+            text: messageData.text || null,
+            imageBase64: messageData.imageBase64 || null,
+            timestamp: serverTimestamp()
+        });
+        console.log("✅ User message saved to Firebase.");
+
+        // 2. Agent switch logic (Aapka original code, bilkul theek hai)
+        messagesSinceAgentSwitch++;
+        if (messagesSinceAgentSwitch >= 4) {
+            currentAgentIndex = (currentAgentIndex + 1) % AGENT_PROFILES.length;
+            messagesSinceAgentSwitch = 0;
+        }
+        await set(ref(db, `chat_users/${currentUser.uid}/agentIndex`), currentAgentIndex);
+        await set(ref(db, `chat_users/${currentUser.uid}/messagesSinceSwitch`), messagesSinceAgentSwitch);
+
+        // =================================================================
+        // === YAHAN NAYA LOGIC ADD HUA HAI (AAPKE PURANE CODE KI JAGAH) ===
+        // =================================================================
+
+        // 3. Typing indicator dikhana SHURU karo
+        const typingDp = document.getElementById('typing-dp');
+        typingDp.src = AGENT_PROFILES[currentAgentIndex].dp;
+        const typingIndicator = document.getElementById('typing-indicator');
+        typingIndicator.style.display = 'flex'; // 'block' ke bajaye 'flex' behtar hai
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        // 4. Pichli summary aur history get karo (Aapka original code)
+        const summarySnapshot = await get(summaryRef);
+        const currentSummary = summarySnapshot.exists() ? summarySnapshot.val().text : null;
+        const historyQuery = query(chatRef, limitToLast(6));
+        const historySnapshot = await get(historyQuery);
+        let chatHistory = [];
+        if (historySnapshot.exists()) {
+            historySnapshot.forEach(child => {
+                const msg = child.val();
+                if (msg.text) {
+                    chatHistory.push({ role: msg.sender === 'user' ? 'USER' : 'CHATBOT', message: msg.text });
+                }
+            });
+        }
+
+        // 5. Backend se jawab (text aur audio) aane ka POORA INTEZAR karo
+        const response = await fetch('/.netlify/functions/ai-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+        mode: 'chat',
+        message: messageData.text, 
+        imageBase64: messageData.imageBase64,
+        chatHistory: chatHistory,
+        summary: currentSummary,
+        userId: userId // <-- SIRF YEH LINE ADD KARNI HAI
+    })
+});
+
+        // 6. Jaise hi jawab aa jaye, foran typing indicator BAND kar do
+        typingIndicator.style.display = 'none';
+
+        // =================================================================
+        // === NAYA LOGIC YAHAN KHATAM HOTA HAI ===
+        // =================================================================
+
+        if (!response.ok) {
+            throw new Error(`AI agent responded with status: ${response.status}`);
+        }
+        
+        const { reply, audioUrl } = await response.json();
+        console.log(`💬 AI ka jawab aur audio mil gaya, ab save kar raha hoon.`);
+
+        // 7. AI ka jawab (text aur audio URL ke sath) Firebase mein save karo (Aapka original code)
+        const currentAgent = AGENT_PROFILES[currentAgentIndex];
+        await push(chatRef, { 
+            sender: 'ai', 
+            text: reply, 
+            audioUrl: audioUrl || null,
+            agentName: currentAgent.name,
+            agentDp: currentAgent.dp,
+            timestamp: serverTimestamp() 
+        });
+        console.log("✅ AI reply with audio saved to Firebase.");
+        
+    } catch (error) {
+        console.error("❌ sendMessage function mein masla:", error);
+        // Error ki soorat mein bhi typing indicator hide karna zaroori hai
+        const typingIndicator = document.getElementById('typing-indicator');
+        if(typingIndicator) typingIndicator.style.display = 'none';
+        
+        await push(ref(db, `chats/user_${userId}`), {
+            sender: 'ai',
+            text: "Maazrat, main abhi aapse rabta nahi kar pa rahi. Network mein masla ho sakta hai. Please thori der baad koshish karein.",
+            timestamp: serverTimestamp()
+        });
+    }
+}
+
+
+
+
+
+
+        
+    // loadMessages function (Aapka Original Code)
+    function loadMessages(userId) {
+        console.log(`👂 Chat listener lagaya ja raha hai user ke liye: ${userId}`);
+        messagesArea.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Loading chat...</p>';
+        
+        const chatQuery = query(ref(db, `chats/user_${userId}`), orderByChild('timestamp'));
+        
+        const callback = onValue(chatQuery, (snapshot) => {
+            console.log("📥 Chat data mila.");
+            messagesArea.innerHTML = '';
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    displayMessage(child.val());
+                });
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            } else {
+                console.log("👋 Naya user, welcome message bhej raha hoon.");
+                const welcomeRef = ref(db, `chats/user_${userId}`);
+                push(welcomeRef, {
+                    sender: 'ai',
+                    text: "Assalam-o-Alaikum! Main Ayesha hoon, aapki personal AI assistant. Aap Jigar Team ke baare mein kya janna chahte hain?",
+                    timestamp: serverTimestamp()
+                });
+            }
+        }, (error) => {
+            console.error("❌ Chat history load karne mein masla:", error);
+            messagesArea.innerHTML = `<p style="text-align:center; color: var(--error-red);">Error: ${error.code}. Could not load chat history.</p>`;
+        });
+        
+        activeChatListener = { ref: chatQuery, type: 'value', callback: callback };
+    }
+
+// === FINAL, MUKAMMAL displayMessage FUNCTION (WITH SPEAKER & COPY BUTTONS) ===
+function displayMessage(msg) {
+    // User ka message wala hissa bilkul waisa hi hai, isko nahi cheda
+    if (msg.sender === 'user') {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message sent`;
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...';
+        
+        let contentHTML = '<div class="message-content">';
+        if (msg.imageBase64) {
+            contentHTML += `<img src="${msg.imageBase64}" class="msg-image" onclick="window.open('${msg.imageBase64}')">`;
+        }
+        if (msg.text) {
+            // --- YEH NAYA, SMART CODE HAI ---
+const urlRegex = /(https?:\/\/[^\s]+)/g;
+const formattedText = msg.text.replace(urlRegex, '<a href="$1" target="_blank" style="color: #53bdeb; text-decoration: underline;">$1</a>').replace(/\n/g, '<br>');
+            contentHTML += `<div class="msg-text">${formattedText}</div>`;
+        }
+        contentHTML += '</div>';
+
+        let metaHTML = `<div class="msg-meta"><span class="msg-time">${time}</span><span class="msg-status"><i class="fas fa-check-double"></i></span></div>`;
+        msgDiv.innerHTML = contentHTML + metaHTML;
+        messagesArea.appendChild(msgDiv);
+
+    } else { // AI ka message wala hissa ab upgrade ho gaya hai
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message received`;
+
+        // 1. DP aur Name (Aapka original code, bilkul theek hai)
+        const agentDisplay = document.createElement('div');
+        agentDisplay.className = 'agent-display';
+        const agentDpImg = document.createElement('img');
+        agentDpImg.src = msg.agentDp || AGENT_PROFILES[currentAgentIndex].dp;
+        agentDpImg.className = 'agent-dp';
+        agentDisplay.appendChild(agentDpImg);
+        const agentNameSpan = document.createElement('div');
+        agentNameSpan.className = 'agent-name';
+        agentNameSpan.textContent = msg.agentName || AGENT_PROFILES[currentAgentIndex].name;
+        agentDisplay.appendChild(agentNameSpan);
+        msgDiv.appendChild(agentDisplay);
+
+        // 2. Message ka text (Aapka original code)
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+        let contentHTML = '<div class="message-content">';
+        
+        // =================================================================
+        // === YAHAN NAYA LOGIC ADD HUA HAI (AAPKE PURANE CODE KI JAGAH) ===
+        // =================================================================
+        
+        // Ek unique ID banayi taake hum is message ko pehchan sakein
+        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (msg.text) {
+            const formattedText = msg.text.replace(/\n/g, '<br>');
+            // Message ke text wale div ko woh unique ID de di
+            contentHTML += `<div class="msg-text" id="${messageId}">${formattedText}</div>`;
+        }
+        contentHTML += '</div>';
+
+        // 3. Speaker aur Copy buttons ka HTML banaya (YEH POORA HISSA NAYA HAI)
+        let actionsHTML = '<div class="msg-actions">';
+        // Agar backend se audio ka URL aaya hai, to Speaker button dikhao
+        if (msg.audioUrl) {
+            actionsHTML += `<button class="action-btn" onclick="speakMessage(this)" data-audio-url="${msg.audioUrl}" title="Sunein"><i class="fas fa-volume-up"></i></button>`;
+        }
+        // Agar message mein text hai, to Copy button dikhao
+        if (msg.text) {
+            actionsHTML += `<button class="action-btn" onclick="copyMessage('${messageId}')" title="Copy Karein"><i class="fas fa-copy"></i></button>`;
+        }
+        actionsHTML += '</div>';
+
+        // =================================================================
+        // === NAYA LOGIC YAHAN KHATAM HOTA HAI ===
+        // =================================================================
+
+        // 4. Baaki ka meta data (Aapka original code)
+        let metaHTML = `<div class="msg-meta"><span class="msg-time">${time}</span></div>`;
+        
+        const innerContent = document.createElement('div');
+        // Ab hum text, naye buttons, aur time, teeno ko ek sath display kar rahe hain
+        innerContent.innerHTML = contentHTML + actionsHTML + metaHTML;
+        msgDiv.appendChild(innerContent);
+        
+        messagesArea.appendChild(msgDiv);
+    }
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+
+
+
+
+
+    // --- 6. HELPER FUNCTIONS (Aapka Original Code) ---
+    function updateSideMenu(user) {
+        console.log("🔄 Side menu update ho raha hai...");
+        const userRef = ref(db, `chat_users/${user.uid}`);
+        onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                document.getElementById('menu-profile-pic').src = data.profilePicture;
+                document.getElementById('menu-profile-name').textContent = data.name;
+                document.getElementById('menu-profile-email').textContent = data.email;
+                console.log("✅ Side menu updated with user data.");
+            } else {
+                console.warn(`⚠️ Side menu ke liye user data nahi mila: ${user.uid}`);
+            }
+        }, { onlyOnce: true });
+    }
+    
+    // === YAHAN SE NAYA CODE ADD KAREIN ===
+
+   // --- YEH NAYA, PROFESSIONAL CODE HAI ---
+// === NAYA, ADVANCED AUDIO PLAYER LOGIC ===
+
+// Global variables to control the audio player
+let globalAudioPlayer = new Audio();
+let currentlyPlayingMessageDiv = null;
+let audioUpdateInterval = null;
+
+// Get player elements from HTML
+const playerContainer = document.getElementById('global-audio-player');
+const playPauseBtn = document.getElementById('audio-play-pause-btn');
+const progressBar = document.getElementById('audio-progress-bar');
+const progressWrapper = document.getElementById('audio-progress-wrapper');
+const timeDisplay = document.getElementById('audio-time-display');
+
+// Function to format time (e.g., 95 seconds -> "1:35")
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Main function that is called when a speaker button is clicked
+window.speakMessage = function(buttonElement) {
+    const audioUrl = buttonElement.getAttribute('data-audio-url');
+    const messageDiv = buttonElement.closest('.message.received'); // Find the parent message div
+
+    if (!audioUrl || !messageDiv) return;
+
+    // If user clicks the same message's speaker button again
+    if (currentlyPlayingMessageDiv === messageDiv) {
+        if (globalAudioPlayer.paused) {
+            globalAudioPlayer.play();
+        } else {
+            globalAudioPlayer.pause();
+        }
+        return;
+    }
+
+    // Stop any previous audio and hide the player
+    if (audioUpdateInterval) clearInterval(audioUpdateInterval);
+    globalAudioPlayer.pause();
+    playerContainer.style.display = 'none';
+    if (currentlyPlayingMessageDiv) {
+        currentlyPlayingMessageDiv.querySelector('.msg-actions').style.display = 'flex'; // Show old speaker button
+    }
+
+    // Setup for the new audio
+    currentlyPlayingMessageDiv = messageDiv;
+    globalAudioPlayer.src = audioUrl;
+    
+    // Hide the small speaker button and show the big player
+    const actionsDiv = messageDiv.querySelector('.msg-actions');
+    if (actionsDiv) actionsDiv.style.display = 'none';
+    messageDiv.appendChild(playerContainer);
+    playerContainer.style.display = 'flex';
+
+    // Show loading spinner
+    playPauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    progressBar.style.width = '0%';
+    timeDisplay.textContent = '0:00';
+
+    globalAudioPlayer.load();
+    globalAudioPlayer.play();
+
+    // Event Listeners for the new audio
+    globalAudioPlayer.onplaying = () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    };
+
+    globalAudioPlayer.onpause = () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    };
+
+    globalAudioPlayer.onended = () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        progressBar.style.width = '0%';
+        playerContainer.style.display = 'none'; // Hide player on end
+        if (actionsDiv) actionsDiv.style.display = 'flex'; // Show small speaker button again
+        currentlyPlayingMessageDiv = null;
+        clearInterval(audioUpdateInterval);
+    };
+
+    globalAudioPlayer.ontimeupdate = () => {
+        const progress = (globalAudioPlayer.currentTime / globalAudioPlayer.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        timeDisplay.textContent = formatTime(globalAudioPlayer.currentTime);
+    };
+
+    globalAudioPlayer.onerror = () => {
+        alert("Maazrat, audio play nahi ho saka.");
+        playerContainer.style.display = 'none';
+        if (actionsDiv) actionsDiv.style.display = 'flex';
+    };
+};
+
+// Make the progress bar seekable
+progressWrapper.addEventListener('click', (e) => {
+    if (!globalAudioPlayer.duration) return;
+    const rect = progressWrapper.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const newTime = (clickX / rect.width) * globalAudioPlayer.duration;
+    globalAudioPlayer.currentTime = newTime;
+});
+
+
+    // Naya Function 2: Text Copy Karne Ke Liye
+    window.copyMessage = function(messageId) {
+        const messageElement = document.getElementById(messageId);
+        if (!messageElement) return;
+
+        const textToCopy = messageElement.innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert("Message copy ho gaya!");
+        }).catch(err => {
+            console.error('Message copy karne mein masla:', err);
+        });
+    }
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    
+    // --- Initial Call (Aapka Original Code) ---
+    showScreen('auth-screen');
+    console.log("✅ Application ready. Waiting for user action.");
+</script>
+
+
+<script>
+    // === "LIVE ONLINE COUNTER ROBOT" v1.2 - INTEGRATED ===
+
+    let onlineCounterInterval = null; // Interval ko control karne ke liye
+
+    function runOnlineCounterBot() {
+        // Agar pehle se chal raha hai to dobara na chalao
+        if (onlineCounterInterval) {
+            console.log("📊 Online counter is already running.");
+            return;
+        }
+        
+        console.log("📊 Live Online Counter Robot is now starting...");
+
+        const ONLINE_USER_DPS = [
+            'https://i.ibb.co/wN5TbNhT/real-girl-pic-photo-images38.webp',
+            'https://i.ibb.co/gMPhL9sC/real-girl-pic-photo-images37.webp',
+            'https://i.ibb.co/fG8c8pKW/c11f6a9ee99385ef8f117aa073f3bbee.jpg',
+            'https://i.ibb.co/9HXkKNHQ/real-girl-pic-photo-images34.webp',
+            'https://i.ibb.co/3mdtktXD/real-girl-pic-photo-images32.webp',
+            'https://i.ibb.co/1GBW5Y2J/55b459b34e2146ba96b91dfc87dc3fba.jpg',
+            'https://i.ibb.co/zWcY3VgZ/real-girl-pic-photo-images29.webp',
+            'https://i.ibb.co/tTmNqtKg/real-girl-pic-photo-images27.webp',
+            'https://i.ibb.co/0jSnhpnc/aba391704d46110722379103dab39aa7.jpg',
+            'https://i.ibb.co/vvJ4myYG/real-girl-pic-photo-images24.webp',
+            'https://i.ibb.co/svRGJCHT/real-girl-pic-photo-images23.webp',
+            'https://i.ibb.co/XkMJnNmL/9a6ab97c7cc373393886ca6107e59d2d.jpg',
+            'https://i.ibb.co/278cZT6q/real-girl-pic-photo-images2.webp',
+            'https://i.ibb.co/7tBvgMGZ/real-girl-pic-photo-images18.webp',
+            'https://i.ibb.co/Z1NLzLv5/d76b70b19f2400db1d3f60ab2f426cd5.jpg',
+            'https://i.ibb.co/QFSsKs2h/real-girl-pic-photo-images17.webp',
+            'https://i.ibb.co/GrrQVhN/real-girl-pic-photo-images110.webp',
+            'https://i.ibb.co/7tBMtr7K/8c65a3c52727b41b5bb9922cdcaecc27.jpg',
+            'https://i.ibb.co/x9LbK7W/real-girl-pic-photo-images109.webp',
+            'https://i.ibb.co/ZzGdSVwg/real-girl-pic-photo-images108.webp',
+            'https://i.ibb.co/XxDdFrrh/c3b2907ae1654d204f4ef4791172689e.jpg',
+            'https://i.ibb.co/XZyCxVNT/real-girl-pic-photo-images105-1.webp',
+            'https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp',
+            'https://i.ibb.co/990wgZnb/5fc19edb79cacdbbe99881063ea24f61.jpg',
+            'https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp',
+            'https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp',
+            'https://i.ibb.co/5xkxmBgy/c3a02ef62a08c98ac58856132957a3b3.jpg',
+            'https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp',
+            'https://i.ibb.co/wN5TbNhT/real-girl-pic-photo-images38.webp',
+            'https://i.ibb.co/gb0rf8HJ/4cf6505194255ffce95161fc9768a400.jpg',
+            'https://i.ibb.co/gMPhL9sC/real-girl-pic-photo-images37.webp',
+            'https://i.ibb.co/9HXkKNHQ/real-girl-pic-photo-images34.webp',
+            'https://i.ibb.co/JbsH9f7/84c87703d99dc22478673b137510c218.jpg',
+            'https://i.ibb.co/3mdtktXD/real-girl-pic-photo-images32.webp',
+            'https://i.ibb.co/zWcY3VgZ/real-girl-pic-photo-images29.webp',
+            'https://i.ibb.co/JwHsYQ4q/8e32e6d8b755bbeac406bf1d88a2853f.jpg',
+            'https://i.ibb.co/vvJ4myYG/real-girl-pic-photo-images24.webp',
+            'https://i.ibb.co/svRGJCHT/real-girl-pic-photo-images23.webp',
+            'https://i.ibb.co/PvmqpTXm/b972e5865fd2f08925c36b697f095852.jpg',
+            'https://i.ibb.co/278cZT6q/real-girl-pic-photo-images2.webp',
+            'https://i.ibb.co/7tBvgMGZ/real-girl-pic-photo-images18.webp',
+            'https://i.ibb.co/YBd3W9Lw/dba0bab8ac105ca4ed918cde99ca181d.jpg',
+            'https://i.ibb.co/QFSsKs2h/real-girl-pic-photo-images17.webp',
+            'https://i.ibb.co/GrrQVhN/real-girl-pic-photo-images110.webp',
+            'https://i.ibb.co/xSq3yZS8/b6cae55b22f2712d77557a6634b7e008.jpg',
+            'https://i.ibb.co/x9LbK7W/real-girl-pic-photo-images109.webp',
+            'https://i.ibb.co/ZzGdSVwg/real-girl-pic-photo-images108.webp',
+            'https://i.ibb.co/Kz55f4jH/13e9e60a10d983a89631d16b27137559.jpg',
+            'https://i.ibb.co/XZyCxVNT/real-girl-pic-photo-images105-1.webp',
+            'https://i.ibb.co/Y7dGcRyb/real-girl-pic-photo-images107-1.webp',
+            'https://i.ibb.co/3mqSYDkw/bcf142c9a137a042f1c0f8e8c9ee66df.jpg',
+            'https://i.ibb.co/ksLvrPDV/real-girl-pic-photo-images101.webp',
+            'https://i.ibb.co/VYTLX1ZK/real-girl-pic-photo-images100.webp',
+            'https://i.ibb.co/ym23g0xW/46029656d7a261e567723d073d94967b.jpg',
+            'https://i.ibb.co/JwmxRWx/5f08631b4814f96764579de6641a50c0.jpg',
+            'https://i.ibb.co/GfVhSBLV/f476179bc399d9adfe22b01a504bfe05.jpg',
+            'https://i.ibb.co/GvzNR7bG/a476c5177831175ea49a367dc7500d7b.jpg',
+            'https://i.ibb.co/0yb3YmT6/b0cfa2b7d92bd96135520874ecbe6047.jpg',
+            'https://i.ibb.co/VWXB79kX/e9764876885fc9c0893493a676ee15ba.jpg',
+            'https://i.ibb.co/0jzwc0fk/088d04b04b33282fb9aef22724afa477.jpg',
+            'https://i.ibb.co/FkRtm6sv/d1a6f9c5ddf9d210bf5c0049de8adad9.jpg',
+            'https://i.ibb.co/XrC9WFZD/dac5e176b2bb36d40d98ac06548a82fb.jpg',
+            'https://i.ibb.co/YSnHjm3/2ca4af83aab1e11f1dc4b589e90478ea.jpg',
+            'https://i.ibb.co/Jwp6Grjg/5a6b8803830f670479905c551cdfdfe5.jpg',
+            'https://i.ibb.co/Wv8M3xsq/0fbc915d2394e4ea837167f8f4ae4af6.jpg',
+            'https://i.ibb.co/4nsmWvyb/dc633b6205b787ead6a211af1b8cd2e6.jpg',
+            'https://i.ibb.co/gbM9zsfB/73d7dfae6835ffd9904eb792b30e76c9.jpg',
+            'https://i.ibb.co/nsWxWxSM/2e36d8e40174739659c2f90338ab574d.jpg',
+            'https://i.ibb.co/QvMnhmD5/ec73aa9e1c0c4b975b6c19cc0eec3043.jpg',
+            'https://i.ibb.co/cKBGmtgH/fd443e3c4043b2b628bf1ca993b49951.jpg',
+            'https://i.ibb.co/hFyHSH4b/2b79b4f82cfa3b1dd1f6060bd2371a4c.jpg',
+            'https://i.ibb.co/bjpVp78x/364de7b46e434ddbd7e66f51d097b6dd.jpg',
+            'https://i.ibb.co/c01m4ZQ/b603fc3d8c5cbdb295f3447e7a880b8d.jpg',
+            'https://i.ibb.co/Zz6GLYfq/29ecf8ce89506db5f99b05de2e57f2cf.jpg',
+            'https://i.ibb.co/SwKWx1jw/6cdef4b8e822f9327ef7fee2b72ae367.jpg',
+            'https://i.ibb.co/dsHBcCfs/d2164c43f344a6415aa9ba5ac3accd5f.jpg',
+            'https://i.ibb.co/mrWB3dyC/IMG-20250917-WA0183.jpg',
+            'https://i.ibb.co/wNmvZNFz/IMG-20250917-WA0189.jpg',
+            'https://i.ibb.co/qYqrJD8q/IMG-20250917-WA0174.jpg',
+            'https://i.ibb.co/XZP661Yn/IMG-20250917-WA0171.jpg',
+            'https://i.ibb.co/N2k8Q7Ym/IMG-20250917-WA0179.jpg',
+            'https://i.ibb.co/hFLJYM1C/IMG-20250917-WA0176.jpg',
+            'https://i.ibb.co/KxqW3fHc/IMG-20250917-WA0172.jpg',
+            'https://i.ibb.co/TxmY49cF/IMG-20250917-WA0060.jpg',
+            'https://i.ibb.co/HfMNpNjH/IMG-20250917-WA0173.jpg',
+            'https://i.ibb.co/r2fF6gyK/IMG-20250917-WA0061.jpg',
+            'https://i.ibb.co/670GXJt2/IMG-20250917-WA0063.jpg',
+            'https://i.ibb.co/Zz514DF5/IMG-20250917-WA0169.jpg',
+            'https://i.ibb.co/JW1wsVYv/IMG-20250917-WA0071.jpg',
+            'https://i.ibb.co/4n51dyPQ/IMG-20250917-WA0070.jpg',
+            'https://i.ibb.co/Rk3Hp7br/IMG-20250917-WA0178.jpg',
+            'https://i.ibb.co/G3fG64wT/IMG-20250917-WA0069.jpg',
+            'https://i.ibb.co/JjytChMb/IMG-20250917-WA0068.jpg',
+            'https://i.ibb.co/B5mJCPp8/IMG-20250917-WA0175.jpg',
+            'https://i.ibb.co/VY1L73vB/IMG-20250917-WA0067.jpg',
+            'https://i.ibb.co/PzTL51RF/IMG-20250917-WA0065.jpg',
+            'https://i.ibb.co/Xx5g9hhG/IMG-20250917-WA0040.jpg',
+            'https://i.ibb.co/KczVtC6R/IMG-20250917-WA0046.jpg',
+            'https://i.ibb.co/rfKnJn4Z/IMG-20250917-WA0045.jpg',
+            'https://i.ibb.co/Vcfk5MdZ/IMG-20250917-WA0064.jpg',
+            'https://i.ibb.co/m5q5Qn57/IMG-20250917-WA0044.jpg',
+            'https://i.ibb.co/5X2KgJr0/IMG-20250917-WA0043.jpg',
+            'https://i.ibb.co/Ng54rWC3/IMG-20250917-WA0033.jpg',
+            'https://i.ibb.co/Zz1WGY2F/IMG-20250917-WA0038.jpg',
+            'https://i.ibb.co/4ZZ9b9Bb/IMG-20250917-WA0031.jpg',
+            'https://i.ibb.co/F4t3xYCc/IMG-20250917-WA0030.jpg',
+            'https://i.ibb.co/rRKy2ks9/IMG-20250917-WA0037.jpg',
+            'https://i.ibb.co/gMxKG3ZF/IMG-20250917-WA0036.jpg'
+        ];
+
+        const numberDisplay = document.getElementById('online-number-display');
+        const dpStack = document.getElementById('online-dp-stack');
+
+        if (!numberDisplay || !dpStack) {
+            console.error("Online counter elements not found. Cannot run the bot.");
+            return;
+        }
+
+        function updateCounter() {
+            const date = new Date();
+            const utcHours = date.getUTCHours();
+            const hours = (utcHours + 5) % 24;
+            
+            let baseCount;
+            if (hours >= 18 && hours < 23) { baseCount = 1100; } 
+            else if (hours >= 12 && hours < 18) { baseCount = 900; } 
+            else { baseCount = 700; }
+
+            const randomFactor = Math.floor(Math.random() * 200) - 100;
+            let onlineCount = baseCount + randomFactor;
+
+            let displayValue = (onlineCount >= 1000) ? (onlineCount / 1000).toFixed(1) + 'k' : onlineCount;
+            numberDisplay.textContent = displayValue;
+
+            dpStack.innerHTML = '';
+            const shuffledDps = [...ONLINE_USER_DPS].sort(() => 0.5 - Math.random());
+            
+            for (let i = 0; i < 4; i++) {
+                const img = document.createElement('img');
+                img.src = shuffledDps[i];
+                img.className = 'stacked-dp';
+                dpStack.appendChild(img);
+            }
+        }
+
+        onlineCounterInterval = setInterval(updateCounter, 5000);
+        updateCounter();
+    }
+
+    function stopOnlineCounter() {
+        if (onlineCounterInterval) {
+            clearInterval(onlineCounterInterval);
+            onlineCounterInterval = null;
+            console.log("📊 Online counter stopped.");
+        }
+    }
+
+    window.startOnlineCounter = runOnlineCounterBot;
+    window.stopOnlineCounter = stopOnlineCounter;
+</script>
+
+
+
+
+    <!-- Aapka poora Firebase wala script yahan aayega -->
+    <!-- <script type="module"> ... </script> -->
+    <!-- Aapka poora Online Counter wala script yahan aayega -->
+    <!-- <script> ... </script> -->
+
+    <!-- === NAYA THEME CHANGER SCRIPT === -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeChangeBtn = document.getElementById('theme-change-btn');
+            const body = document.body;
+
+            const themes = [
+                { name: 'default-blue', bgDark: '#000000', bgMedium: '#0a0a14', bgLight: '#101022', header: '#1a1a33', accent: '#007bff', userMsg: '#0056b3', glowStart: '#007bff', glowEnd: '#ff00ff' },
+                { name: 'royal-purple', bgDark: '#080510', bgMedium: '#120c1e', bgLight: '#1f1533', header: '#2c1f4a', accent: '#8a2be2', userMsg: '#6a1e9a', glowStart: '#8a2be2', glowEnd: '#00e5ff' },
+                { name: 'matrix-green', bgDark: '#000000', bgMedium: '#020f02', bgLight: '#051f05', header: '#0a300a', accent: '#00ff00', userMsg: '#008000', glowStart: '#00ff00', glowEnd: '#adff2f' },
+                { name: 'sunset-orange', bgDark: '#140800', bgMedium: '#211000', bgLight: '#331a00', header: '#4a2600', accent: '#ff8c00', userMsg: '#cc7000', glowStart: '#ff8c00', glowEnd: '#ff4500' },
+                { name: 'ocean-teal', bgDark: '#000c0e', bgMedium: '#00161a', bgLight: '#002b33', header: '#00404d', accent: '#20c997', userMsg: '#17a278', glowStart: '#20c997', glowEnd: '#00f5d4' },
+                { name: 'ruby-red', bgDark: '#140003', bgMedium: '#210005', bgLight: '#33000a', header: '#4d000f', accent: '#dc143c', userMsg: '#b01030', glowStart: '#dc143c', glowEnd: '#ff1493' },
+                { name: 'classic-grey', bgDark: '#0a0a0a', bgMedium: '#141414', bgLight: '#222222', header: '#333333', accent: '#00aaff', userMsg: '#0077b3', glowStart: '#00aaff', glowEnd: '#00ff7f' }
+            ];
+
+            let currentThemeIndex = 0;
+
+            // Function to apply a theme
+            function applyTheme(theme) {
+                const root = document.documentElement;
+                root.style.setProperty('--theme-bg-dark', theme.bgDark);
+                root.style.setProperty('--theme-bg-medium', theme.bgMedium);
+                root.style.setProperty('--theme-bg-light', theme.bgLight);
+                root.style.setProperty('--theme-header', theme.header);
+                root.style.setProperty('--theme-accent-main', theme.accent);
+                root.style.setProperty('--theme-user-msg', theme.userMsg);
+                root.style.setProperty('--theme-glow-start', theme.glowStart);
+                root.style.setProperty('--theme-glow-end', theme.glowEnd);
+                body.dataset.theme = theme.name;
+                console.log(`Theme changed to: ${theme.name}`);
+            }
+
+            // Event listener for the button
+            themeChangeBtn.addEventListener('click', () => {
+                currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+                const nextTheme = themes[currentThemeIndex];
+                applyTheme(nextTheme);
+            });
+        });
+    </script>
+
+
+
+</body>
+</html>
+

@@ -1,0 +1,16 @@
+{
+  "name": "jigar-team-ai-chat",
+  "version": "1.0.0",
+  "description": "AI Chat with Supabase and AWS Polly",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jigar Team",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-polly": "^3.525.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "firebase": "^10.7.1"
+  }
+}
