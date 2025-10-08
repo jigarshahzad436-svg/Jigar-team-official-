@@ -720,8 +720,7 @@ async function sendMessage(userId, messageData) {
             });
         }
 
-        // 5. Backend se jawab (text aur audio) aane ka POORA INTEZAR karo
-        const response = await fetch('/.netlify/functions/ai-chat', {
+        const response = await fetch('https://jigar-team-official.vercel.app/api/ai-chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
