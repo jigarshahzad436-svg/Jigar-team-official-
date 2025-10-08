@@ -129,7 +129,7 @@ export default async function handler(request, response) {
 
     // 1. Firebase se pichli chat history load karna
     const chatRef = ref(database, `ai_chats/${userId}`);
-    const historyQuery = query(chatRef, limitToLast(10));
+    const historyQuery = query(chatRef, limitToLast(8));
     const snapshot = await get(historyQuery);
     let chatHistory = [];
     if (snapshot.exists()) {
@@ -155,7 +155,7 @@ export default async function handler(request, response) {
     const { data: documents, error } = await supabase.rpc('match_documents', {
       query_embedding: queryEmbedding,
       match_threshold: 0.5,
-      match_count: 7,
+      match_count: 5,
     });
 
     if (error) {
@@ -213,7 +213,7 @@ export default async function handler(request, response) {
     // 8. Final jawab user ko wapas bhejna
     response.status(200).json({ 
     reply: aiText,
-    audioUrl: audioUrl 
+     
 });
 
   } catch (error) {
